@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 
 
@@ -20,18 +21,19 @@ namespace MacApp05Game.Controllers
     /// collisions with the player sprite
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class CoinsController
     {
         private SoundEffect coinEffect;
 
-        private readonly List<AnimatedSprite> Coins;        
+        private readonly List<AnimatedSprite> Coins;
 
         public CoinsController()
         {
             Coins = new List<AnimatedSprite>();
         }
+
         /// <summary>
         /// Create an animated sprite of a copper coin
         /// which could be collected by the player for a score
@@ -40,20 +42,22 @@ namespace MacApp05Game.Controllers
         {
             coinEffect = SoundController.GetSoundEffect("Coin");
             Animation animation = new Animation("coin", coinSheet, 8);
+            Random r = new Random();
+
 
             AnimatedSprite coin = new AnimatedSprite()
             {
                 Animation = animation,
                 Image = animation.SetMainFrame(graphics),
                 Scale = 2.0f,
-                Position = new Vector2(600, 100),
+                Position = new Vector2(r.Next(400), r.Next(500)),
                 Speed = 0,
             };
 
             Coins.Add(coin);
         }
 
-        public void HasCollided(AnimatedPlayer player)
+        public void HasCollided(PlayerSprite player)
         {
             foreach (AnimatedSprite coin in Coins)
             {
@@ -64,13 +68,14 @@ namespace MacApp05Game.Controllers
                     coin.IsActive = false;
                     coin.IsAlive = false;
                     coin.IsVisible = false;
+                    player.Score += 10;
                 }
-            }           
+            }
         }
 
         public void Update(GameTime gameTime)
         {
-            foreach(AnimatedSprite coin in Coins)
+            foreach (AnimatedSprite coin in Coins)
             {
                 coin.Update(gameTime);
             }

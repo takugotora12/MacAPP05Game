@@ -32,7 +32,7 @@ namespace MacApp05Game.Models
             {
                 return new Rectangle(
                     (int)Position.X, (int)Position.Y,
-                    (int)(Image.Width * Scale), 
+                    (int)(Image.Width * Scale),
                     (int)(Image.Height * Scale));
             }
         }
@@ -68,7 +68,7 @@ namespace MacApp05Game.Models
 
             spriteBatch.Draw(Image, BoundingBox, colour);
 
-            if(!string.IsNullOrEmpty(Text))
+            if (!string.IsNullOrEmpty(Text))
             {
                 var x = (BoundingBox.X + (BoundingBox.Width / 2)) -
                     (font.MeasureString(Text).X / 2);
@@ -89,14 +89,14 @@ namespace MacApp05Game.Models
                 currentMouse.X, currentMouse.Y, 1, 1);
 
             isHovering = true;
-            if(mouseRectangle.Intersects(BoundingBox))
+            if (mouseRectangle.Intersects(BoundingBox))
             {
                 isHovering = true;
 
-                if(currentMouse.LeftButton == ButtonState.Released &&
+                if (currentMouse.LeftButton == ButtonState.Released &&
                    previousMouse.LeftButton == ButtonState.Pressed)
                 {
-                    if(click != null)
+                    if (click != null)
                     {
                         click(this, new EventArgs());
                     }

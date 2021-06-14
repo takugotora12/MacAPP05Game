@@ -7,6 +7,11 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MacApp05Game
 {
+    public enum GameStates
+    {
+        starting, playing, won, lost
+    }
+
     /// <summary>
     /// This game creates a variety of sprites as an example.  
     /// There is no game to play yet. The spaceShip and the 
@@ -16,39 +21,38 @@ namespace MacApp05Game
     /// random coins and the enemy tries to catch the player.
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora 
     /// </authors>
     public class App05Game : Game
     {
         #region Constants
 
-        public const int HD_Height = 720;
-        public const int HD_Width = 1280;
+        public const int HD_Height = 800;
+        public const int HD_Width = 1400;
 
         #endregion
 
-        #region Attribute
+        #region Attributes
 
         private readonly GraphicsDeviceManager graphicsManager;
         private GraphicsDevice graphicsDevice;
         private SpriteBatch spriteBatch;
 
         private SpriteFont arialFont;
-        private SpriteFont calibriFont;
+        private SpriteFont verdanaFont;
 
         private Texture2D backgroundImage;
-        private SoundEffect flameEffect;
+        private SoundEffect bulletEffect;
 
-        private readonly CoinsController coinsController;
+        private CoinsController coinsController;
 
+        // Ship
         private PlayerSprite shipSprite;
-        private Sprite asteroidSprite;
+        // asteroid controller
 
-        private AnimatedPlayer playerSprite;
-        private AnimatedSprite enemySprite;
+        private AsteroidController asteroidController;
 
-        private int score;
-        private int health;
+        private GameStates state;
 
         #endregion
 
@@ -57,12 +61,10 @@ namespace MacApp05Game
             graphicsManager = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-
-            coinsController = new CoinsController();
         }
 
         /// <summary>
-        /// Setup the game window size to 720P 1280 x 720 pixels
+        /// Setup the game window size to 720P 800 x 1400 pixels
         /// Simple fixed playing area with no camera or scrolling
         /// </summary>
         protected override void Initialize()
@@ -74,8 +76,8 @@ namespace MacApp05Game
 
             graphicsDevice = graphicsManager.GraphicsDevice;
 
-            score = 0;
-            health = 100;
+
+            coinsController = new CoinsController();
 
             base.Initialize();
         }
@@ -88,30 +90,39 @@ namespace MacApp05Game
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             backgroundImage = Content.Load<Texture2D>(
-                "images/green_background720p");
+                "images/Space6000x4000");
 
             // Load Music and SoundEffects
 
             SoundController.LoadContent(Content);
-            SoundController.PlaySong("Adventure");
-            flameEffect = SoundController.GetSoundEffect("Flame");
+            //SoundController.PlaySong("Adventure");
+
+            bulletEffect = SoundController.GetSoundEffect("Bullets");
 
             // Load Fonts
 
             arialFont = Content.Load<SpriteFont>("arial");
-            calibriFont = Content.Load<SpriteFont>("Verdana");
+            verdanaFont = Content.Load<SpriteFont>("Verdana");
 
             // suitable for asteroids type game
 
             SetupSpaceShip();
-            SetupAsteroid();
+            SetupAsteroidController();
+            SetupCoins();
 
-            // animated sprites suitable for pacman type game
+            state = GameStates.playing;
 
-            SetupAnimatedPlayer();
-            SetupEnemy();
-
+        }
+        /// <summary>
+        /// This is used create multiple coins at random locations
+        /// </summary>
+        private void SetupCoins()
+        {
             Texture2D coinSheet = Content.Load<Texture2D>("images/coin_copper");
+            coinsController.CreateCoin(graphicsDevice, coinSheet);
+            coinsController.CreateCoin(graphicsDevice, coinSheet);
+            coinsController.CreateCoin(graphicsDevice, coinSheet);
+            coinsController.CreateCoin(graphicsDevice, coinSheet);
             coinsController.CreateCoin(graphicsDevice, coinSheet);
         }
 
@@ -119,26 +130,16 @@ namespace MacApp05Game
         /// This is a single image sprite that rotates
         /// and move at a constant speed in a fixed direction
         /// </summary>
-        private void SetupAsteroid()
+        private void SetupAsteroidController()
         {
-            Texture2D asteroid = Content.Load<Texture2D>(
-               "images/asteroid-1");
-
-            asteroidSprite = new Sprite(asteroid, 1200, 500)
-            {
-                Direction = new Vector2(-1, 0),
-                Speed = 100,
-                Scale = 0.2f,
-                Rotation = MathHelper.ToRadians(3),
-                RotationSpeed = 2f,
-            };
-
-    }
+            asteroidController = new AsteroidController();
+            asteroidController.CreateAsteroids(graphicsDevice, Content);
+        }
 
         /// <summary>
         /// This is a Sprite that can be controlled by a
-        /// player using Rotate Left = A, Rotate Right = D, 
-        /// Forward = Space
+        /// player using Rotate Left = leftarrow, Rotate Right = rightarrow, 
+        /// Forward = forwardarrow
         /// </summary>
         private void SetupSpaceShip()
         {
@@ -151,111 +152,68 @@ namespace MacApp05Game
                 Speed = 200,
                 DirectionControl = DirectionControl.Rotational
             };
-    }
 
-
-        /// <summary>
-        /// This is a Sprite with four animations for the four
-        /// directions, up, down, left and right
-        /// </summary>
-        private void SetupAnimatedPlayer()
-        {
-            Texture2D sheet4x3 = Content.Load<Texture2D>("images/rsc-sprite-sheet1");
-
-            AnimationController contoller = new AnimationController(graphicsDevice, sheet4x3, 4, 3);
-
-            string[] keys = new string[] { "Down", "Left", "Right", "Up" };
-            contoller.CreateAnimationGroup(keys);
-
-            playerSprite = new AnimatedPlayer()
-            {
-                CanWalk = true,
-                Scale = 2.0f,
-
-                Position = new Vector2(200, 200),
-                Speed = 200,
-                Direction = new Vector2(1, 0),
-
-                Rotation = MathHelper.ToRadians(0),
-                RotationSpeed = 0f
-            };
-
-            contoller.AppendAnimationsTo(playerSprite);
+            shipSprite.Score = 0;
+            shipSprite.Health = 100;
         }
-
-        /// <summary>
-        /// This is an enemy Sprite with four animations for the four
-        /// directions, up, down, left and right.  Has no intelligence!
-        /// </summary>
-        private void SetupEnemy()
-        {
-            Texture2D sheet4x3 = Content.Load<Texture2D>("images/rsc-sprite-sheet3");
-
-            AnimationController manager = new AnimationController(graphicsDevice, sheet4x3, 4, 3);
-
-            string[] keys = new string[] { "Down", "Left", "Right", "Up" };
-
-            manager.CreateAnimationGroup(keys);
-
-            enemySprite = new AnimatedSprite()
-            {
-                Scale = 2.0f,
-
-                Position = new Vector2(1000, 200),
-                Direction = new Vector2(-1, 0),
-                Speed = 50,
-
-                Rotation = MathHelper.ToRadians(0),
-            };
-
-            manager.AppendAnimationsTo(enemySprite);
-            enemySprite.PlayAnimation("Left");
-        }
-
 
         /// <summary>
         /// Called 60 frames/per second and updates the positions
         /// of all the drawable objects
         /// </summary>
-        /// <param name="gameTime">
+        /// <param name='gameTime'>
         /// Can work out the elapsed time since last call if
         /// you want to compensate for different frame rates
         /// </param>
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || 
-                Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
 
-            // Update Asteroids
-
-            shipSprite.Update(gameTime);
-            asteroidSprite.Update(gameTime);
-
-            if (shipSprite.HasCollided(asteroidSprite) && shipSprite.IsAlive)
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             {
-                flameEffect.Play();
 
-                shipSprite.IsActive = false;
-                shipSprite.IsAlive = false;
-                shipSprite.IsVisible = false;
+                Exit();
+
             }
 
-            // Update Chase Game
-
-            playerSprite.Update(gameTime);
-            enemySprite.Update(gameTime);
-
-            if (playerSprite.HasCollided(enemySprite))
+            if (state == GameStates.playing)
             {
-                playerSprite.IsActive = false;
-                playerSprite.IsAlive = false;
-                enemySprite.IsActive = false;
+                // Update Asteriod
+
+                shipSprite.Update(gameTime);
+
+                asteroidController.Update(gameTime);
+                asteroidController.HasCollided(shipSprite);
+
+                UpdateScore();
+                UpdateHealth();
+
+                coinsController.Update(gameTime);
+                coinsController.HasCollided(shipSprite);
+
+
+                base.Update(gameTime);
+
             }
 
-            coinsController.Update(gameTime);
-            coinsController.HasCollided(playerSprite);
+        }
 
-            base.Update(gameTime);
+        /// <summary>
+        /// When a coin is collected the score gets updated.
+        /// </summary>
+        public void UpdateScore()
+        {
+            if (shipSprite.Score == 50)
+            {
+                state = GameStates.won;
+            }
+        }
+
+        public void UpdateHealth()
+        {
+            if (shipSprite.Health == 0)
+            {
+                state = GameStates.lost;
+            }
         }
 
         /// <summary>
@@ -274,16 +232,26 @@ namespace MacApp05Game
             // Draw asteroids game
 
             shipSprite.Draw(spriteBatch);
-            asteroidSprite.Draw(spriteBatch);
+            asteroidController.Draw(spriteBatch);
 
             // Draw Chase game
 
-            playerSprite.Draw(spriteBatch);
             coinsController.Draw(spriteBatch);
-            enemySprite.Draw(spriteBatch);
 
             DrawGameStatus(spriteBatch);
+
+
             DrawGameFooter(spriteBatch);
+
+            if (state == GameStates.lost)
+            {
+                DrawGameLost(spriteBatch);
+            }
+
+            if (state == GameStates.won)
+            {
+                DrawGameWon(spriteBatch);
+            }
 
             spriteBatch.End();
             base.Draw(gameTime);
@@ -295,21 +263,22 @@ namespace MacApp05Game
         /// </summary>
         public void DrawGameStatus(SpriteBatch spriteBatch)
         {
-            Vector2 topLeft = new Vector2(4, 4);
-            string status = $"Score = {score:##0}";
+            int margin = 50;
+
+            Vector2 topLeft = new Vector2(margin, 4);
+            string status = $"Score = {shipSprite.Score:##0}";
 
             spriteBatch.DrawString(arialFont, status, topLeft, Color.White);
 
-            string game = "Coin Chase";
+            string game = "Space Asteroids";
             Vector2 gameSize = arialFont.MeasureString(game);
-            Vector2 topCentre = new Vector2((HD_Width/2 - gameSize.X/2), 4);
+            Vector2 topCentre = new Vector2((HD_Width / 2 - gameSize.X / 2), 4);
             spriteBatch.DrawString(arialFont, game, topCentre, Color.White);
 
-            string healthText = $"Health = {health}%";
+            string healthText = $"Health = {shipSprite.Health}%";
             Vector2 healthSize = arialFont.MeasureString(healthText);
-            Vector2 topRight = new Vector2(HD_Width - (healthSize.X + 4), 4);
+            Vector2 topRight = new Vector2(HD_Width - (healthSize.X + margin), 4);
             spriteBatch.DrawString(arialFont, healthText, topRight, Color.White);
-
         }
 
         /// <summary>
@@ -318,23 +287,49 @@ namespace MacApp05Game
         /// </summary>
         public void DrawGameFooter(SpriteBatch spriteBatch)
         {
-            int margin = 20;
+            int margin = 60;
 
-            string names = "Derek & Andrei";
-            string app = "App05: MonogGame";
+            string names = "Abdulla Alqattan";
+            string app = "App05: Space Asteroids";
             string module = "BNU CO453-2020";
 
-            Vector2 namesSize = calibriFont.MeasureString(names);
-            Vector2 appSize = calibriFont.MeasureString(app);
+            Vector2 namesSize = verdanaFont.MeasureString(names);
+            Vector2 appSize = verdanaFont.MeasureString(app);
 
-            Vector2 bottomCentre = new Vector2((HD_Width - namesSize.X)/ 2, HD_Height - margin);
+            Vector2 bottomCentre = new Vector2((HD_Width - namesSize.X) / 2, HD_Height - margin);
             Vector2 bottomLeft = new Vector2(margin, HD_Height - margin);
             Vector2 bottomRight = new Vector2(HD_Width - appSize.X - margin, HD_Height - margin);
 
-            spriteBatch.DrawString(calibriFont, names, bottomCentre, Color.Yellow);
-            spriteBatch.DrawString(calibriFont, module, bottomLeft, Color.Yellow);
-            spriteBatch.DrawString(calibriFont, app, bottomRight, Color.Yellow);
+            spriteBatch.DrawString(verdanaFont, names, bottomCentre, Color.Yellow);
+            spriteBatch.DrawString(verdanaFont, module, bottomLeft, Color.Yellow);
+            spriteBatch.DrawString(verdanaFont, app, bottomRight, Color.Yellow);
 
+        }
+        public void DrawGameLost(SpriteBatch spriteBatch)
+        {
+            string msg1 = "You Lost !!! Game Over";
+            string msg2 = "Press the ESC Key to EXIT";
+
+            Vector2 Centre = new Vector2((HD_Width) / 2, (HD_Height) / 2);
+            Vector2 Centre2 = new Vector2((HD_Width) / 2, (HD_Height) / 2 + 20);
+
+            spriteBatch.DrawString(verdanaFont, msg1, Centre, Color.Red);
+
+
+            spriteBatch.DrawString(verdanaFont, msg2, Centre2, Color.Yellow);
+        }
+
+        public void DrawGameWon(SpriteBatch spriteBatch)
+        {
+            string msg1 = "You Won the Game !!!";
+            string msg2 = "Press the ESC Key to EXIT";
+
+            Vector2 Centre = new Vector2((HD_Width) / 2, (HD_Height) / 2);
+            Vector2 Centre2 = new Vector2((HD_Width) / 2, (HD_Height) / 2 + 20);
+
+            spriteBatch.DrawString(verdanaFont, msg1, Centre, Color.Green);
+
+            spriteBatch.DrawString(verdanaFont, msg2, Centre2, Color.Yellow);
         }
     }
 }

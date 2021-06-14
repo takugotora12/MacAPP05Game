@@ -12,7 +12,7 @@ namespace MacApp05Game.Models
     /// It updates and draws the current animation.
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class AnimatedSprite : Sprite
     {
@@ -24,12 +24,12 @@ namespace MacApp05Game.Models
         private Rectangle sourceRectangle;
 
         public AnimatedSprite() : base()
-        {            
+        {
         }
 
         public void PlayAnimation(string key)
         {
-            if(Animations != null && Animations.ContainsKey(key))
+            if (Animations != null && Animations.ContainsKey(key))
             {
                 Animation = Animations[key];
                 Animation.Start();
@@ -62,8 +62,8 @@ namespace MacApp05Game.Models
                          Color.White, Rotation, Origin,
                          Scale, SpriteEffects.None, 1);
             }
-            else  
-                base.Draw(spriteBatch); 
+            else
+                base.Draw(spriteBatch);
         }
     }
 }

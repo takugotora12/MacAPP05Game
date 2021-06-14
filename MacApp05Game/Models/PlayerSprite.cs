@@ -18,7 +18,7 @@ namespace MacApp05Game.Models
     /// It updates and draws the current animation.
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class PlayerSprite : Sprite
     {
@@ -26,7 +26,10 @@ namespace MacApp05Game.Models
 
         public DirectionControl DirectionControl { get; set; }
 
-        public PlayerSprite(): base()
+        public int Score { get; set; }
+        public int Health { get; set; }
+
+        public PlayerSprite() : base()
         {
             DirectionControl = DirectionControl.Rotational;
             movement = new MovementController();
@@ -54,7 +57,7 @@ namespace MacApp05Game.Models
             IsActive = false;
             RotationSpeed = 0;
 
-            if(DirectionControl == DirectionControl.FourDirections)
+            if (DirectionControl == DirectionControl.FourDirections)
             {
                 Vector2 newDirection = movement.ChangeDirection(keyState);
 
@@ -64,7 +67,7 @@ namespace MacApp05Game.Models
                     IsActive = true;
                 }
             }
-            else if(DirectionControl == DirectionControl.Rotational)
+            else if (DirectionControl == DirectionControl.Rotational)
             {
                 Rotate(keyState);
             }

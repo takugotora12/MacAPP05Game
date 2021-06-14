@@ -10,7 +10,7 @@ namespace MacApp05Game.Controllers
     /// Sound Controller will manage any sounds or music in the game.
     /// </summary>
     /// <author>
-    /// Andrei Cruceru
+    /// Taku Gotora
     /// </author>
     public static class SoundController
     {

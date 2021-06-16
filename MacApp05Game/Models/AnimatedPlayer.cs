@@ -10,7 +10,7 @@ namespace MacApp05Game.Models
     /// directions, up, down, left and right
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class AnimatedPlayer : AnimatedSprite
     {

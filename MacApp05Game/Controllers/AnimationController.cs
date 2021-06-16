@@ -12,7 +12,7 @@ namespace MacApp05Game.Controllers
     /// animations one per row.
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class AnimationController
     {

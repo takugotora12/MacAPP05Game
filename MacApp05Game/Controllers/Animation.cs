@@ -11,7 +11,7 @@ namespace MacApp05Game.Controllers
     /// the update method as a source Rectangle
     /// </summary>
     /// <authors>
-    /// Derek Peacock & Andrei Cruceru
+    /// Taku Gotora
     /// </authors>
     public class Animation
     {
